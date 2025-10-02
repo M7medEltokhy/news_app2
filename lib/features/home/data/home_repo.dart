@@ -1,0 +1,39 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+import 'package:news_app/core/utils/app_constants.dart';
+import 'package:news_app/core/utils/article_filter.dart';
+import 'package:news_app/features/home/data/home_model.dart';
+
+abstract class HomeRepo {
+  Future<Either<String, List<ArticaleModel>>> getArticales({
+    required String category,
+    required String language,
+  });
+}
+
+class HomeRepoImpl implements HomeRepo {
+  final Dio dio = Dio();
+
+  @override
+  Future<Either<String, List<ArticaleModel>>> getArticales({
+    required String category,
+    required String language,
+  }) async {
+    try {
+      var response = await dio.get(
+        '${baseUrl}everything',
+        queryParameters: {
+          'q': category,
+          'language': language,
+          'sortBy': 'publishedAt',
+          'apiKey': apiKey,
+        },
+      );
+
+      final data = HomeModel.fromJson(response.data);
+      return Right(removeDuplicates(data.articles));
+    } on DioException catch (e) {
+      return Left(e.message ?? 'An error occurred');
+    }
+  }
+}
